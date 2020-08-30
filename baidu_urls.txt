@@ -1,0 +1,3 @@
+http://www.dinghongchao.com/kryo-quickstart/
+http://www.dinghongchao.com/how-to-reduce-redis-memory-usage/
+http://www.dinghongchao.com/hexo-theme-beantech/
