@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="tXtNyFE2w3vLqiEm2Y-choseNYzlfqwFwcaxoVHcapM">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="丁洪超，Web，Software Engineer | 这里是 @Dhc丁洪超 的个人博客，与你一起成长。">
+    <meta name="keyword" content="丁洪超, Dhc丁洪超, Dhc, DHC, @DHC, @Dhc, 丁洪超的博客, Dhc Blog, DHC Blog, 程序员DHC, 程序员Dhc, 博客, 个人网站, 互联网, Web, 后端">
+    <meta name="baidu-site-verification" content="LJTWgIiBLs">
+    <link rel="shortcut icon" href="http://image.dinghongchao.com/img/favicon.ico">
+    
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <title>
+        
+          序列化框架 Kryo 快速入门 - 丁洪超的博客 | Dhc Blog
+        
+    </title>
+
+    <link rel="canonical" href="http://www.dinghongchao.com/kryo-quickstart/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/bootstrap.min.css?v=1.0">
+
+    <!-- Custom CSS --> 
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/hux-blog.min.css?v=1.0">
+    
+    <!-- Pygments Highlight CSS -->
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/highlight.css">
+
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/widget.css">
+
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/rocket.css">
+
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/toc.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<!-- Modified by Yu-Hsuan Yen -->
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background: 0 0;
+            
+            /*post*/
+        
+    }
+    
+</style>
+
+
+    <header class="intro-header style-text" >
+
+<div class="header-mask"></div>
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        
+            <div class="post-heading">
+                <div class="tags">
+                    
+                      <a class="tag" href="/archive/?tag=序列化" title="序列化">序列化</a>
+                    
+                      <a class="tag" href="/archive/?tag=kryo" title="kryo">kryo</a>
+                    
+                </div>
+                <h1>序列化框架 Kryo 快速入门</h1>
+                <h2 class="subheading"></h2>
+                <span class="meta">
+                    Posted by ÐHC on
+                    2019-07-30
+                </span>
+            </div>
+        
+
+
+        </div>
+    </div>
+</div>
+</header>
+
+	
+    <!-- Navigation -->
+
+    <nav class="navbar navbar-default navbar-custom navbar-fixed-top invert">
+
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Ðhc Blog</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+                    <li class="search-icon">
+                        <a href="javascript:void(0)">
+                            <i class="fa fa-search"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+            close: function () {
+                $navbar.className = " ";
+                // wait until animation end.
+                setTimeout(function () {
+                    // prevent frequently toggle
+                    if ($navbar.className.indexOf('in') < 0) {
+                        $collapse.style.height = "0px"
+                    }
+                }, 400)
+            },
+            open: function () {
+                $collapse.style.height = "auto"
+                $navbar.className += " in";
+            }
+        }
+
+        // Bind Event
+        $toggle.addEventListener('click', function (e) {
+            if ($navbar.className.indexOf('in') > 0) {
+                __HuxNav__.close()
+            } else {
+                __HuxNav__.open()
+            }
+        })
+
+        /**
+         * Since Fastclick is used to delegate 'touchstart' globally
+         * to hack 300ms delay in iOS by performing a fake 'click',
+         * Using 'e.stopPropagation' to stop 'touchstart' event from 
+         * $toggle/$collapse will break global delegation.
+         * 
+         * Instead, we use a 'e.target' filter to prevent handler
+         * added to document close HuxNav.  
+         *
+         * Also, we use 'click' instead of 'touchstart' as compromise
+         */
+        document.addEventListener('click', function (e) {
+            if (e.target == $toggle) return;
+            if (e.target.className == 'icon-bar') return;
+            __HuxNav__.close();
+        })
+</script>
+
+
+    <!-- Search -->
+<div class="search-page">
+    <div class="search-icon-close-container">
+      <span class="search-icon-close">
+        <i class="fa fa-chevron-down"></i>
+      </span>
+    </div>
+    <div class="search-main container">
+      <div class="row">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+          <form></form>
+          <input type="text" id="search-input" placeholder="$ grep...">
+          </form>
+          <div id="search-results" class="mini-post-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+    <!-- Main Content -->
+    <!-- Modify by Yu-Hsuan Yen -->
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <blockquote>
+<p>Kryo is a fast and efficient object graph serialization framework for Java. The goals of the project are speed, efficiency, and an easy to use API. The project is useful any time objects need to be persisted, whether to a file, database, or over the network.</p>
+</blockquote>
+<p>导读：在 <a href="http://dinghongchao.com/how-to-reduce-redis-memory-usage/" target="_blank" rel="noopener">减少 Redis 占用内存的建议</a> 文章的 6 点建议中，序列化建议的结论为：业界常用的高性能序列化框架为 <strong>FST</strong> 与 <strong>Kryo</strong>.  本篇将介绍 Kryo 框架的基本使用。</p>
+<h2 id="实战">实战</h2>
+<h3 id="集成">集成</h3>
+<h4 id="maven-依赖">MAVEN 依赖</h4>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">     &lt;groupId&gt;com.esotericsoftware&lt;/groupId&gt;</span><br><span class="line">     &lt;artifactId&gt;kryo&lt;/artifactId&gt;</span><br><span class="line">     &lt;version&gt;4.0.2&lt;/version&gt;</span><br><span class="line"> &lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+<h4 id="asm-版本冲突">asm 版本冲突</h4>
+<p>Kryo 底层依赖于ASM技术，与Spring等框架可能会发生ASM依赖的版本冲突。所以提供了另外一个依赖解决此问题</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;com.esotericsoftware&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;kryo-shaded&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;4.0.2&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="demo">Demo</h3>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.esotericsoftware.kryo.Kryo;</span><br><span class="line"> <span class="keyword">import</span> com.esotericsoftware.kryo.io.Output;</span><br><span class="line"> <span class="keyword">import</span> com.esotericsoftware.kryo.io.Input;</span><br><span class="line"> <span class="comment">// ...</span></span><br><span class="line"> Kryo kryo = <span class="keyword">new</span> Kryo();</span><br><span class="line"> <span class="comment">// ...</span></span><br><span class="line"> Output output = <span class="keyword">new</span> Output(<span class="keyword">new</span> FileOutputStream(<span class="string">"file.bin"</span>));</span><br><span class="line"> SomeClass someObject = ...</span><br><span class="line"> kryo.writeObject(output, someObject);</span><br><span class="line"> output.close();</span><br><span class="line"> <span class="comment">// ...</span></span><br><span class="line"> Input input = <span class="keyword">new</span> Input(<span class="keyword">new</span> FileInputStream(<span class="string">"file.bin"</span>));</span><br><span class="line"> SomeClass someObject = kryo.readObject(input, SomeClass<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line"> input.close();</span><br></pre></td></tr></table></figure>
+<p><strong>注意：当确认读/写执行完成后，一定要调用 <code>close()</code></strong>.</p>
+<h2 id="理论">理论</h2>
+<h3 id="对象创建">对象创建</h3>
+<p>默认如果类有<strong>无参构造器</strong>，将通过 <a href="http://code.google.com/p/reflectasm/" target="_blank" rel="noopener">ReflectASM</a>  or reflection 执行序列化，否则抛出异常。</p>
+<p>对于类中没有无参构造器的场景，Kryo 提供了配置方式其使用 JVM 特定的 API 实例化对象。然而 StdInstantiatorStrategy 此方式只在部分 JVM 上生效，所以类中构建无参构造器的方式是更安全、可移植性更高的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Kryo kryo = <span class="keyword">new</span> Kryo();</span><br><span class="line">kryo.setInstantiatorStrategy(<span class="keyword">new</span> Kryo.DefaultInstantiatorStrategy(<span class="keyword">new</span> StdInstantiatorStrategy()));</span><br></pre></td></tr></table></figure>
+<p>上述配置策略：首先使用无参构造器策略，若创建对象失败则降级使用 StdInstantiatorStrategy.</p>
+<h3 id="序列化器">序列化器</h3>
+<p>Kryo 支持如下的默认序列化器：</p>
+<table>
+<thead>
+<tr>
+<th>boolean</th>
+<th>Boolean</th>
+<th>byte</th>
+<th>Byte</th>
+<th>char</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Character</td>
+<td>short</td>
+<td>Short</td>
+<td>int</td>
+<td>Integer</td>
+</tr>
+<tr>
+<td>long</td>
+<td>Long</td>
+<td>float</td>
+<td>Float</td>
+<td>double</td>
+</tr>
+<tr>
+<td>Double</td>
+<td>byte[]</td>
+<td>String</td>
+<td>BigInteger</td>
+<td>BigDecimal</td>
+</tr>
+<tr>
+<td>Collection</td>
+<td>Date</td>
+<td>Collections.emptyList</td>
+<td>Collections.singleton</td>
+<td>Map</td>
+</tr>
+<tr>
+<td>StringBuilder</td>
+<td>TreeMap</td>
+<td>Collections.emptyMap</td>
+<td>Collections.emptySet</td>
+<td>KryoSerializable</td>
+</tr>
+<tr>
+<td>StringBuffer</td>
+<td>Class</td>
+<td>Collections.singletonList</td>
+<td>Collections.singletonMap</td>
+<td>Currency</td>
+</tr>
+<tr>
+<td>Calendar</td>
+<td>TimeZone</td>
+<td>Enum</td>
+<td>EnumSet</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="序列化步骤">序列化步骤</h4>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.zowo.dto;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">User</span> </span>&#123;</span><br><span class="line">	<span class="keyword">private</span> String userName;</span><br><span class="line">	<span class="keyword">private</span> String pwd;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>先序列化类型(Class实例) 记录类型，然后根据类型返回对应的序列化器</li>
+<li>使用序列化器序列该类型的值</li>
+<li>如果自定义类型，未从默认序列化器列表中找到序列化器则使用 <a href="https://github.com/EsotericSoftware/kryo/tree/kryo-4#FieldSerializer" target="_blank" rel="noopener">FieldSerializer</a></li>
+<li>通过FieldSeriaizer返回对象的属性列表，然后一个字段一个字段的序列化当然其序列化类型也是，先类型再值的模式，递归进行，最终完成。</li>
+</ul>
+<p>以 User 为例，具体步骤如下：</p>
+<ul>
+<li>序列化 com.zowo.dto.User  返回序列化器结果为 FieldSerialize</li>
+<li>通过FieldSeriaizer返回 User 的属性列表，然后单独一个字段一个字段的序列化</li>
+</ul>
+<p>其中 <em>先序列化类型(Class实例) 记录类型</em> 步骤，主要看使用的写方式 <code>kryo.writeClassAndObject()</code> 只有在 writeClass 时才会记录类型。</p>
+<h4 id="自定义序列化">自定义序列化</h4>
+<h5 id="继承-serializer">继承 Serializer</h5>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SomeClass</span> </span>&#123; </span><br><span class="line">    <span class="keyword">int</span> x, y; </span><br><span class="line">    Object something; </span><br><span class="line">&#125; </span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SomeClassSerializer</span> <span class="keyword">extends</span> <span class="title">Serializer</span>&lt;<span class="title">SomeClass</span>&gt; </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">write</span> <span class="params">(Kryo kryo, Output output, Tile object)</span> </span>&#123; </span><br><span class="line">     output.writeInt(object.x); </span><br><span class="line">     output.writeInt(object.y); </span><br><span class="line">     kryo.writeClassAndObject(output, object); </span><br><span class="line">    &#125; </span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Tile <span class="title">read</span> <span class="params">(Kryo kryo, Input input, Class&lt;Tile&gt; type)</span> </span>&#123; </span><br><span class="line">     Tile tile = <span class="keyword">new</span> Tile(); </span><br><span class="line">     kryo.reference(tile); <span class="comment">// Only necessary if Kryo#setReferences is true AND Tile#something could reference this tile. </span></span><br><span class="line">     tile.x = input.readInt(); </span><br><span class="line">     tile.y = input.readInt(); </span><br><span class="line">     tile.something = kryo.readClassAndObject(input); </span><br><span class="line">     <span class="keyword">return</span> tile; </span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用自定义序列化器有两种方式：</p>
+<ul>
+<li>
+<p>将类注入到注册器中，并指定序列化器</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Kryo kryo = <span class="keyword">new</span> Kryo();</span><br><span class="line">kryo.register(SomeClass<span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">SomeSerializer</span>())</span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>增加额外的默认序列化器</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Kryo kryo = <span class="keyword">new</span> Kryo();</span><br><span class="line">kryo.addDefaultSerializer(SomeClass<span class="class">.<span class="keyword">class</span>,<span class="title">SomeSerializer</span>.<span class="title">class</span>)</span>;</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line">Output output = ...</span><br><span class="line">SomeClass someObject = ...</span><br><span class="line">kryo.writeObject(output, someObject);</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h5 id="实现-kryoserializable">实现 KryoSerializable</h5>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SomeClass</span> <span class="keyword">implements</span> <span class="title">KryoSerializable</span> </span>&#123; </span><br><span class="line">    <span class="keyword">int</span> x, y; </span><br><span class="line">    Object something; </span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">write</span> <span class="params">(Kryo kryo, Output output)</span> </span>&#123; </span><br><span class="line">     output.writeInt(x); </span><br><span class="line">     output.writeInt(y); </span><br><span class="line">     kryo.writeClassAndObject(output, something); </span><br><span class="line">    &#125; </span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">read</span> <span class="params">(Kryo kryo, Input input)</span> </span>&#123; </span><br><span class="line">     x = input.readInt(); </span><br><span class="line">     y = input.readInt(); </span><br><span class="line">     something = kryo.readClassAndObject(input); </span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="读写操作">读写操作</h3>
+<p>Kryo 在三种场景下提供了三种方式对 Objects 进行读写：</p>
+<ul>
+<li>
+<p>不知道 class 信息且 object 可为空</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">kryo.writeClassAndObject(output, object);</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line">Object object = kryo.readClassAndObject(input);</span><br><span class="line"><span class="keyword">if</span> (object <span class="keyword">instanceof</span> SomeClass) &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此方式可以把对象信息直接写到序列化数据里，反序列化的时候可以精确地找到原始类信息，不会出错。但会浪费空间去存储对象信息。</p>
+</li>
+<li>
+<p>知道 class 信息且 object 可为空</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dukryo.writeObjectOrNull(output, someObject);</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line">SomeClass someObject = kryo.readObjectOrNull(input, SomeClass<span class="class">.<span class="keyword">class</span>)</span>;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<ul>
+<li>
+<p>知道 class 信息且 object 不可为</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kryo.writeObject(output, someObject);</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line">SomeClass someObject = kryo.readObject(input, SomeClass<span class="class">.<span class="keyword">class</span>)</span>;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="example">Example</h4>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.dhc.dto;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> com.google.common.base.MoreObjects;</span><br><span class="line"><span class="keyword">import</span> lombok.Getter;</span><br><span class="line"><span class="keyword">import</span> lombok.Setter;</span><br><span class="line"><span class="keyword">import</span> java.io.Serializable;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Getter</span></span><br><span class="line"><span class="meta">@Setter</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UserDTO</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">int</span> pwd;</span><br><span class="line">	<span class="keyword">private</span> String userName;</span><br><span class="line">  </span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="title">UserDTO</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">this</span>.userName = <span class="string">"dinghongchao.com"</span>;</span><br><span class="line">		<span class="keyword">this</span>.pwd = <span class="number">123</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Kryo kryo = <span class="keyword">new</span> Kryo();</span><br><span class="line">kryo.setReferences(<span class="keyword">false</span>);</span><br><span class="line">UserDTO userDTO = <span class="keyword">new</span> UserDTO();</span><br><span class="line">output = <span class="keyword">new</span> Output(<span class="keyword">new</span> FileOutputStream(<span class="string">"file2.txt"</span>));</span><br><span class="line">kryo.writeClassAndObject(output, userDTO);</span><br><span class="line">output.close();</span><br></pre></td></tr></table></figure>
+<p><img src="http://image.dinghongchao.com/kryo-quickstart/kryo-class.png?imageslim" alt="kryo-class"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Kryo kryo = <span class="keyword">new</span> Kryo();</span><br><span class="line">kryo.setReferences(<span class="keyword">false</span>);</span><br><span class="line">UserDTO userDTO = <span class="keyword">new</span> UserDTO();</span><br><span class="line">output = <span class="keyword">new</span> Output(<span class="keyword">new</span> FileOutputStream(<span class="string">"file2.txt"</span>));</span><br><span class="line">kryo.writeObject(output, userDTO);</span><br><span class="line">output.close();</span><br></pre></td></tr></table></figure>
+<p><img src="http://image.dinghongchao.com/kryo-quickstart/kryo-no-class.png?imageslim" alt="kryo-no-class"></p>
+<h3 id="引用">引用</h3>
+<p>kryo 中默认每个对象序列化后会被记录到对象图中，且只是用一个 int 类型来表示该对象值，类似一种缓存的概念。在整个递归序列化期间，相同的对象，类标识只会序列化一次，后续的用一个局部 int 值来代替。</p>
+<p>这对于循环引用可以有效的防止栈内溢出，当你能确定不会有循环引用发生时，可以通过 <code>kryo.setReferences(false)</code>  关闭来提升性能。但当调用 <code>read()</code> 前一定要调用 <code>kryo.setReferences(false)</code>  保证 <code>write()</code> 与 <code>read()</code> 一致。</p>
+<h3 id="注册器">注册器</h3>
+<h4 id="概述">概述</h4>
+<p><code>kryo.writeClassAndObject()</code> 会记录 object 的类标识，默认是将完整的类路径序列化为字节进行存储。为了更高效及节省空间，kryo 提供了 Registration，让使用者可以在序列化前将已知的类以数字为标识注册到 kryo 中。序列化后的标识将由类路径改为数字。</p>
+<h4 id="注册方式">注册方式</h4>
+<ul>
+<li>
+<p>非明确指定</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Kryo kryo = <span class="keyword">new</span> Kryo();</span><br><span class="line">kryo.register(SomeClass<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">kryo.register(SomeClass1<span class="class">.<span class="keyword">class</span>)</span>;</span><br></pre></td></tr></table></figure>
+<p>此方式按照注册顺序分配标识 ID , 位置越靠前则 ID 越小。</p>
+</li>
+<li>
+<p>明确指定</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Kryo kryo = <span class="keyword">new</span> Kryo();</span><br><span class="line">kryo.register(SomeClass<span class="class">.<span class="keyword">class</span>, 10)</span>; kryo.register(AnotherClass<span class="class">.<span class="keyword">class</span>, 11)</span>;</span><br><span class="line">kryo.register(YetAnotherClass<span class="class">.<span class="keyword">class</span>, 12)</span>;</span><br></pre></td></tr></table></figure>
+<p>此方式无需在意注册顺序，注册时可明确指定分配标识 ID.</p>
+</li>
+</ul>
+<p>主动分配标识 ID 需注意：</p>
+<ol>
+<li>
+<p>不要使用 0-9 的数字，它们已被分配给原始类及包装类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.esotericsoftware.kryo;</span><br><span class="line"><span class="comment">// Primitives and string. Primitive wrappers automatically use the same registration as primitives.</span></span><br><span class="line">register(<span class="keyword">int</span><span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">IntSerializer</span>())</span>;<span class="comment">// 0</span></span><br><span class="line">register(String<span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">StringSerializer</span>())</span>;<span class="comment">// 1</span></span><br><span class="line">register(<span class="keyword">float</span><span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">FloatSerializer</span>())</span>;<span class="comment">// 2</span></span><br><span class="line">register(<span class="keyword">boolean</span><span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">BooleanSerializer</span>())</span>;<span class="comment">// 3</span></span><br><span class="line">register(<span class="keyword">byte</span><span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">ByteSerializer</span>())</span>;<span class="comment">// 4</span></span><br><span class="line">register(<span class="keyword">char</span><span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">CharSerializer</span>())</span>;<span class="comment">// 5</span></span><br><span class="line">register(<span class="keyword">short</span><span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">ShortSerializer</span>())</span>;<span class="comment">// 6</span></span><br><span class="line">register(<span class="keyword">long</span><span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">LongSerializer</span>())</span>;<span class="comment">// 7</span></span><br><span class="line">register(<span class="keyword">double</span><span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">DoubleSerializer</span>())</span>;<span class="comment">// 8</span></span><br><span class="line">register(<span class="keyword">void</span><span class="class">.<span class="keyword">class</span>, <span class="title">new</span> <span class="title">VoidSerializer</span>())</span>;<span class="comment">// 9</span></span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<ol start="2">
+<li>
+<p>尽量不要使用负数，会导致效率降低</p>
+</li>
+<li>
+<p>-1 和 -2 是保留数字，不要使用。</p>
+</li>
+</ol>
+<h4 id="注意项">注意项</h4>
+<ol>
+<li>序列化、反序列使用的注册类的标识 ID 必须相同，否则会序列化失败</li>
+<li><code>Kryo#setRegistrationRequired</code> 默认为false，我们可以将其设为true，当序列化遇到的类未进行注册则抛出异常。可以有效的防止应用中直接使用类名做序列化存储。</li>
+<li>如果不使用注册器则可以考虑将 package 命名缩短。</li>
+</ol>
+<h3 id="兼容">兼容</h3>
+<p>业务上常用场景是把序列化后的数据进行持久化(如 Redis 缓存、DB 存储)，当类中字段出现变更(增加、删除、修改)，能正确用老类反序列新 bytes (向前兼容)、用新类反序列旧 bytes  (向后兼容) 成为序列化的关键。</p>
+<p>FieldSerializer 不支持上述变更场景，因为其为了高效在序列存储时只存储了 field 的值，没有存储其他任何额外信息。</p>
+<p>但 kryo 提供了 3 个对 FieldSerializer 扩展的类来支持兼容性：</p>
+<ul>
+<li>
+<p>VersionFieldSerializer</p>
+<p>支持向后兼容，但只支持字段新增，不支持字段删除、重命名、字段类型变更。</p>
+</li>
+<li>
+<p>TaggedFieldSerializer</p>
+<ul>
+<li>
+<p>向后兼容</p>
+<p>只序列化有 <code>@Tag(int)</code> 注解的字段，默认支持向后兼容可以增加新字段。</p>
+<p>它比 VersionFieldSerializer 多了两个特性：</p>
+<ol>
+<li>因其序列化会保存 Tag 值，故支持修改字段名。</li>
+<li>字段上有 <code>@Deprecated</code> 注解时，即使字段上仍有 <code>@Tag(int)</code> 注解，也会忽略此字段的读写序列化。</li>
+</ol>
+</li>
+<li>
+<p>向前兼容</p>
+<ol>
+<li>
+<p>前提要在字段上使用注解 <code>@Tag(value=1, annexed=true)</code></p>
+</li>
+<li>
+<p>设置 TaggedFieldSerializer 的 SkipUnknownTags 属性为true</p>
+<p><code>kryo.getTaggedFieldSerializerConfig().setSkipUnknownTags(true)</code></p>
+</li>
+</ol>
+</li>
+</ul>
+<p>TaggedFieldSerializer 比 VersionFieldSerializer 更完美的进行兼容性的支持，但它要为每个字段多存储额外的 Tag 信息。虽然 <code>@Deprecated</code> 可以在读时忽略旧 bytes 中的字段，但在生产环境中是不符合向前兼容的。</p>
+</li>
+<li>
+<p>CompatibleFieldSerializer</p>
+<p>最简单的方式实现前后兼容，支持增加、删除、重命名，不支持字段类型修改。</p>
+<p>但其在性能、存储空间上比 TaggedFieldSerializer 弱。因其会保存字段名称。</p>
+<p><img src="http://image.dinghongchao.com/kryo-quickstart/kryo-compatible.png?imageslim" alt="kryo-compatible"></p>
+</li>
+</ul>
+<h3 id="线程安全">线程安全</h3>
+<p>Kryo 不是线程安全的。每个线程都应该有自己的 Kryo，Input 和 Output 实例。此外，在同一个线程内不要使用相同的 byte 数组，因为反序列化可能会覆盖掉序列化所做的修改。</p>
+<p>在多线程的场景下，每次序列化和反序列化时都进行一次实例化 <code>Kryo</code> 是影响性能的，可以使用下面两种方式来做优化：</p>
+<ul>
+<li>
+<p>ThreadLocal</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Setup ThreadLocal of Kryo instances</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ThreadLocal&lt;Kryo&gt; kryos = <span class="keyword">new</span> ThreadLocal&lt;Kryo&gt;() &#123;</span><br><span class="line">	<span class="function"><span class="keyword">protected</span> Kryo <span class="title">initialValue</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		Kryo kryo = <span class="keyword">new</span> Kryo();</span><br><span class="line">		<span class="comment">// configure kryo instance, customize settings</span></span><br><span class="line">		<span class="keyword">return</span> kryo;</span><br><span class="line">	&#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Somewhere else, use Kryo</span></span><br><span class="line">Kryo k = kryos.get();</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<ul>
+<li>
+<p>KryoPool</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.esotericsoftware.kryo.Kryo;</span><br><span class="line"><span class="keyword">import</span> com.esotericsoftware.kryo.pool.*;</span><br><span class="line"></span><br><span class="line">KryoFactory factory = <span class="keyword">new</span> KryoFactory() &#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> Kryo <span class="title">create</span> <span class="params">()</span> </span>&#123;</span><br><span class="line">    Kryo kryo = <span class="keyword">new</span> Kryo();</span><br><span class="line">    <span class="comment">// configure kryo instance, customize settings</span></span><br><span class="line">    <span class="keyword">return</span> kryo;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// Build pool with SoftReferences enabled (optional)</span></span><br><span class="line">KryoPool pool = <span class="keyword">new</span> KryoPool.Builder(factory).softReferences().build();</span><br><span class="line">Kryo kryo = pool.borrow();</span><br><span class="line"><span class="comment">// do s.th. with kryo here, and afterwards release it</span></span><br><span class="line">pool.release(kryo);</span><br><span class="line"></span><br><span class="line"><span class="comment">// or use a callback to work with kryo - no need to borrow/release,</span></span><br><span class="line"><span class="comment">// that's done by `run`.</span></span><br><span class="line">String value = pool.run(<span class="keyword">new</span> KryoCallback() &#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> String <span class="title">execute</span><span class="params">(Kryo kryo)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> kryo.readObject(input, String<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="优化">优化</h2>
+<p>优化最终目的就是减少包体的大小、加快序列化的速度。可以从以下几方面着手</p>
+<ul>
+<li>明确知道 Object class 信息时，不要使用 <code>writeClassAndObject()</code></li>
+<li>为业务对象使用配套的自定义序列化器，加快序列化速度</li>
+<li>当能确定不会有循环引用发生时，可以通过 <code>kryo.setReferences(false)</code>  关闭引用来提升性能</li>
+<li>尽可能使用注册器，不可使用则考虑将包命名长度缩短</li>
+<li>使用 kryo 池化技术</li>
+</ul>
+<h2 id="reference">Reference</h2>
+<p><a href="https://github.com/EsotericSoftware/kryo" target="_blank" rel="noopener">EsotericSoftware-Kryo</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1443590" target="_blank" rel="noopener">源码分析kryo对象序列化实现原理</a></p>
+
+
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                    
+                        <li class="next">
+                            <a href="/how-to-reduce-redis-memory-usage/" data-toggle="tooltip" data-placement="top" title="[Redis] 减少 Redis 占用内存的建议">Next Post &rarr;</a>
+                        </li>
+                    
+                </ul>
+
+                <!-- duoshuo Share start -->
+                
+                <!-- 多说 Share end-->
+
+                <!-- 多说评论框 start -->
+                
+                <!-- 多说评论框 end -->
+
+                <!-- disqus comment start -->
+                
+                    <div class="comment">
+                        <div id="disqus_thread" class="disqus-thread"></div>
+                    </div>
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content 注释掉toc目录功能<partial('_partial/toc') -->
+            <!-- Table of Contents -->
+
+    
+      <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    
+                      <ol class="catalog-body"><li class="catalog-body-item catalog-body-level-2"><a class="catalog-body-link" href="#实战"><span class="catalog-body-text">实战</span></a><ol class="catalog-body-child"><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#集成"><span class="catalog-body-text">集成</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#demo"><span class="catalog-body-text">Demo</span></a></li></ol></li><li class="catalog-body-item catalog-body-level-2"><a class="catalog-body-link" href="#理论"><span class="catalog-body-text">理论</span></a><ol class="catalog-body-child"><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#对象创建"><span class="catalog-body-text">对象创建</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#序列化器"><span class="catalog-body-text">序列化器</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#读写操作"><span class="catalog-body-text">读写操作</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#引用"><span class="catalog-body-text">引用</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#注册器"><span class="catalog-body-text">注册器</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#兼容"><span class="catalog-body-text">兼容</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#线程安全"><span class="catalog-body-text">线程安全</span></a></li></ol></li><li class="catalog-body-item catalog-body-level-2"><a class="catalog-body-link" href="#优化"><span class="catalog-body-text">优化</span></a></li><li class="catalog-body-item catalog-body-level-2"><a class="catalog-body-link" href="#reference"><span class="catalog-body-text">Reference</span></a></li></ol>
+                    
+                </div>
+      </div>
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/archive/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/archive/?tag=序列化" title="序列化">序列化</a>
+                        
+                          <a class="tag" href="/archive/?tag=kryo" title="kryo">kryo</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="#" target="_blank">Ðhc Blog</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- disqus embedded js code start (one page only need to embed once) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "dhc-1";
+    var disqus_identifier = "http://www.dinghongchao.com/kryo-quickstart/";
+    var disqus_url = "http://www.dinghongchao.com/kryo-quickstart/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus embedded js code start end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          //icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            /*left: -0.75em;*/
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                
+                
+                    <li>
+                        <a target="_blank" href="https://twitter.com/zowo_dhc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+                
+
+                
+
+                
+                    <li>
+                        <a target="_blank" href="https://www.facebook.com/dinghongchao">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/dinghongchao">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; ÐHC 2021 
+                    <br>
+                    <a href="https://beian.miit.gov.cn"> 京ICP备18036499号-1</a>
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> 
+                    | 
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=Huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="http://image.dinghongchao.com/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="http://image.dinghongchao.com/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="http://image.dinghongchao.com/js/hux-blog.min.js?version=1.0"></script>
+<script src="http://image.dinghongchao.com/js/archive.js"></script>
+<script src="http://image.dinghongchao.com/js/search.js"></script>
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://image.dinghongchao.com/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-137732952-1';
+    var _gaDomain = 'dinghongchao.com';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    //https://developers.google.cn/analytics/devguides/collection/analyticsjs/display-features?hl=zh-cn
+    //广告功能
+    ga('require', 'displayfeatures');
+    //停用广告功能
+    ga('set', 'allowAdFeatures', false);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = 'a2170bfc4f18f88db1664c4e38a3d921';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+<!-- Side Catalog -->
+<script type="text/javascript">
+    // toggle side catalog
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+</script>  
+
+
+<!-- Simple Jekyll Search -->
+<script>
+    // https://stackoverflow.com/questions/1912501/unescape-html-entities-in-javascript
+    function htmlDecode(input) {
+        var e = document.createElement('textarea');
+        e.innerHTML = input;
+        // handle case of empty input
+        return e.childNodes.length === 0 ? "" : e.childNodes[0].nodeValue;
+    }
+
+    
+    //searchFunc('/search.xml','search-input', 'search-results');
+
+    $(document).ready(function () {
+        var $searchPage = $('.search-page');
+        var $searchOpen = $('.search-icon');
+        var $searchClose = $('.search-icon-close');
+        var $searchInput = $('#search-input');
+        var $body = $('body');
+
+        $searchOpen.on('click', function (e) {
+            e.preventDefault();
+            $searchPage.toggleClass('search-active');
+            var prevClasses = $body.attr('class') || '';
+            setTimeout(function () {
+                $body.addClass('no-scroll');
+            }, 400)
+
+            if ($searchPage.hasClass('search-active')) {
+                $searchClose.on('click', function (e) {
+                    e.preventDefault();
+                    $searchPage.removeClass('search-active');
+                    $body.attr('class', prevClasses);  // from closure 
+                });
+                $searchInput.focus();
+            }
+            getSearchFile();
+        });
+    });
+</script>
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="http://image.dinghongchao.com/js/totop.js?v=1.0.0" async=""></script>
+   
+<!-- Image to hack wechat -->
+<img src="http://image.dinghongchao.com/img/icon_wechat.jpg" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+</body>
+
+</html>

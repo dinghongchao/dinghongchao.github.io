@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="tXtNyFE2w3vLqiEm2Y-choseNYzlfqwFwcaxoVHcapM">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="丁洪超，Web，Software Engineer | 这里是 @Dhc丁洪超 的个人博客，与你一起成长。">
+    <meta name="keyword" content="丁洪超, Dhc丁洪超, Dhc, DHC, @DHC, @Dhc, 丁洪超的博客, Dhc Blog, DHC Blog, 程序员DHC, 程序员Dhc, 博客, 个人网站, 互联网, Web, 后端">
+    <meta name="baidu-site-verification" content="LJTWgIiBLs">
+    <link rel="shortcut icon" href="http://image.dinghongchao.com/img/favicon.ico">
+    
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <title>
+        
+          [Redis] 减少 Redis 占用内存的建议 - 丁洪超的博客 | Dhc Blog
+        
+    </title>
+
+    <link rel="canonical" href="http://www.dinghongchao.com/how-to-reduce-redis-memory-usage/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/bootstrap.min.css?v=1.0">
+
+    <!-- Custom CSS --> 
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/hux-blog.min.css?v=1.0">
+    
+    <!-- Pygments Highlight CSS -->
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/highlight.css">
+
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/widget.css">
+
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/rocket.css">
+
+    <link rel="stylesheet" href="http://image.dinghongchao.com/css/toc.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<!-- Modified by Yu-Hsuan Yen -->
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        
+            
+                background: 0 0;
+            
+            /*post*/
+        
+    }
+    
+</style>
+
+
+    <header class="intro-header style-text" >
+
+<div class="header-mask"></div>
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        
+            <div class="post-heading">
+                <div class="tags">
+                    
+                      <a class="tag" href="/archive/?tag=Redis" title="Redis">Redis</a>
+                    
+                </div>
+                <h1>[Redis] 减少 Redis 占用内存的建议</h1>
+                <h2 class="subheading">Memory is expensive</h2>
+                <span class="meta">
+                    Posted by ÐHC on
+                    2019-07-25
+                </span>
+            </div>
+        
+
+
+        </div>
+    </div>
+</div>
+</header>
+
+	
+    <!-- Navigation -->
+
+    <nav class="navbar navbar-default navbar-custom navbar-fixed-top invert">
+
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Ðhc Blog</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+
+                    
+
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                    
+
+                        
+                        <li>
+                            <a href="/archive/">Archives</a>
+                        </li>
+                        
+                    
+                    <li class="search-icon">
+                        <a href="javascript:void(0)">
+                            <i class="fa fa-search"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+            close: function () {
+                $navbar.className = " ";
+                // wait until animation end.
+                setTimeout(function () {
+                    // prevent frequently toggle
+                    if ($navbar.className.indexOf('in') < 0) {
+                        $collapse.style.height = "0px"
+                    }
+                }, 400)
+            },
+            open: function () {
+                $collapse.style.height = "auto"
+                $navbar.className += " in";
+            }
+        }
+
+        // Bind Event
+        $toggle.addEventListener('click', function (e) {
+            if ($navbar.className.indexOf('in') > 0) {
+                __HuxNav__.close()
+            } else {
+                __HuxNav__.open()
+            }
+        })
+
+        /**
+         * Since Fastclick is used to delegate 'touchstart' globally
+         * to hack 300ms delay in iOS by performing a fake 'click',
+         * Using 'e.stopPropagation' to stop 'touchstart' event from 
+         * $toggle/$collapse will break global delegation.
+         * 
+         * Instead, we use a 'e.target' filter to prevent handler
+         * added to document close HuxNav.  
+         *
+         * Also, we use 'click' instead of 'touchstart' as compromise
+         */
+        document.addEventListener('click', function (e) {
+            if (e.target == $toggle) return;
+            if (e.target.className == 'icon-bar') return;
+            __HuxNav__.close();
+        })
+</script>
+
+
+    <!-- Search -->
+<div class="search-page">
+    <div class="search-icon-close-container">
+      <span class="search-icon-close">
+        <i class="fa fa-chevron-down"></i>
+      </span>
+    </div>
+    <div class="search-main container">
+      <div class="row">
+        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+          <form></form>
+          <input type="text" id="search-input" placeholder="$ grep...">
+          </form>
+          <div id="search-results" class="mini-post-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+    <!-- Main Content -->
+    <!-- Modify by Yu-Hsuan Yen -->
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+            <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <h2 id="redis-内存优化建议">Redis 内存优化建议</h2>
+<p>随着 Redis 在互联网应用上的大量使用，其高性能特点展现的淋漓尽致，为开发者们解决了头疼的性能问题，但随着应用数据量的不断增长致使 Redis 所占用的内存越来越大。为了减少企业成本或解决暂时无法迁移扩展问题，本文将介绍 6 点大方向上的内存优化建议。对于一些细节的建议，可以查看 Redis 官方文档 <a href="https://redis.io/topics/memory-optimization" target="_blank" rel="noopener">memory- optimization</a>.</p>
+<h3 id="1-序列化">1.序列化</h3>
+<p>日常使用中 Redis value 存储通常为序列化后的内容，合理的序列化会尽可能去节省 Redis 占用的内存空间。各类开发语言工具包都会内置序列化对象工具类(eg. Java’s serialize, Python’s pickle, PHP’s serialize…)，使用它们虽然简单无需额外配置，但它们可能会浪费大量的内存。如何选择合理的序列化方案，来看下前辈们总结的  Benchmark.</p>
+<p><em>数值越小性能越好</em></p>
+<p><img src="http://image.dinghongchao.com/hexo-theme-beantech/jvm-ser-time.png?imageslim" alt="jvm-ser-time"></p>
+<p><img src="http://image.dinghongchao.com/hexo-theme-beantech/jvm-ser-size.png?imageslim" alt="jvm-ser-size"></p>
+<p align="right" style="color: gray; font-size:3px;"><i>Source: <a href="https://github.com/eishay/jvm-serializers/wiki" target="_blank" rel="external">Eishay Smith</a></i></p>
+![dubbo-ser](http://image.dinghongchao.com/hexo-theme-beantech/dubbo-ser-bytes.png?imageslim)
+<p align="right" style="color: gray; font-size:3px;"><i>Source: <a href="https://dangdangdotcom.github.io/dubbox/serialization.html" target="_blank" rel="external">当当</a></i></p>
+#### 结论
+<p>根据上述的压测结果可以看出业界常用的高性能序列化方式为 <strong>FST</strong> 与 <strong>Kryo</strong>. 具体使用哪个由大家自己选择吧。</p>
+<p><img src="http://image.dinghongchao.com/hexo-theme-beantech/fst-vs-kryo.png?imageslim" alt="fst-vs-kryo"></p>
+<h3 id="2-压缩">2.压缩</h3>
+<p>压缩数据包也是减少占用内存空间的有效手段，同样来参考下前辈们的测试 Benchmark.</p>
+<p><img src="https://image.dinghongchao.com/hexo-theme-beantech/quick-benchmark.png?imageslim" alt="quick-benchmark"></p>
+<p align="right" style="color: gray; font-size:3px;"><i>Source: <a href="https://catchchallenger.first-world.info/wiki/Quick_Benchmark:_Gzip_vs_Bzip2_vs_LZMA_vs_XZ_vs_LZ4_vs_LZO" target="_blank" rel="external">catchchallenger.first-world.info</a></i></p>
+![rplot](https://image.dinghongchao.com/hexo-theme-beantech/Rplot05.png?imageslim)
+<p align="right" style="color: gray; font-size:3px;"><i>Source: <a href="https://www.percona.com/blog/2016/04/13/evaluating-database-compression-methods-update/" target="_blank" rel="external">www.percona.com</a></i></p>
+#### 结论
+<p>具体测试基准大家可以查看 Source 引用的具体文章，通过结果可以看出 snappy 、lz4 在压缩解压速度上是有很大优势的，但在压缩比上比其他方式略低。目前 FaceBook Folly 项目内也在使用 snappy 、lz4 进行压缩。具体选择哪种方法进行压缩还是需要根据业务场景来定，如：需要高质量压缩比 对系统性能、并发无要求的可选择 gzip 、lzma. 对系统性能有要求可选择 snappy 、lz4.</p>
+<h3 id="3-冷热数据">3.冷热数据</h3>
+<p>很多时候我们并不需要将所有数据都存储在 Redis 中，千万不要将 Redis 当成关系型数据库(如:MySQL、Oracle) 使用。如果你的业务场景允许，Redis 中可以只存储热点数据或近期数据。当请求未命中时可以从下级缓存或 DB 中获取相关数据。</p>
+<h3 id="4-规范数据结构">4.规范数据结构</h3>
+<p>Redis 与 Memcached 最大的区别就是 Redis 提供了更多的数据结构，而 Memcached 只有 Key-Value 结构。当使用 Redis 时不要进入一个误区，大量使用 get/set 这样的 API , 将 Redis 当成 Memcached 使用。大量的 Key 同样会消耗大量内存，可以利用 hash、list、set、zset 等结构规避这类问题。所以提前规划好数据的存储结构是很有必要的。</p>
+<h3 id="5-设置过期和清除数据">5.设置过期和清除数据</h3>
+<p>对于使用频次很少或者中间业务流转的数据尽可能的设置过期时间，可以是几小时、几天或几周，同时对于已使用过的中间业务数据要及时主动删除，来减少不必要的额外存储。对于操作 lists 或 sets 时要适当清除集合中的无效数据。</p>
+<h3 id="6-使用正确的淘汰策略">6.使用正确的淘汰策略</h3>
+<p>当出现 Redis 存储数据占用的内存超过其所配置最大内存这种情况时，可以配置 Redis 作为  LRU cache 服务。Redis 提供了 6 种 <a href="https://redis.io/topics/lru-cache" target="_blank" rel="noopener">淘汰策略</a>，大家按需选择吧！</p>
+
+
+                <hr>
+                <!-- Pager -->
+                <ul class="pager">
+                    
+                        <li class="previous">
+                            <a href="/kryo-quickstart/" data-toggle="tooltip" data-placement="top" title="序列化框架 Kryo 快速入门">&larr; Previous Post</a>
+                        </li>
+                    
+                    
+                </ul>
+
+                <!-- duoshuo Share start -->
+                
+                <!-- 多说 Share end-->
+
+                <!-- 多说评论框 start -->
+                
+                <!-- 多说评论框 end -->
+
+                <!-- disqus comment start -->
+                
+                    <div class="comment">
+                        <div id="disqus_thread" class="disqus-thread"></div>
+                    </div>
+                
+                <!-- disqus comment end -->
+            </div>
+            
+            <!-- Tabe of Content 注释掉toc目录功能<partial('_partial/toc') -->
+            <!-- Table of Contents -->
+
+    
+      <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    
+                      <ol class="catalog-body"><li class="catalog-body-item catalog-body-level-2"><a class="catalog-body-link" href="#redis-内存优化建议"><span class="catalog-body-text">Redis 内存优化建议</span></a><ol class="catalog-body-child"><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#1-序列化"><span class="catalog-body-text">1.序列化</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#2-压缩"><span class="catalog-body-text">2.压缩</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#3-冷热数据"><span class="catalog-body-text">3.冷热数据</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#4-规范数据结构"><span class="catalog-body-text">4.规范数据结构</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#5-设置过期和清除数据"><span class="catalog-body-text">5.设置过期和清除数据</span></a></li><li class="catalog-body-item catalog-body-level-3"><a class="catalog-body-link" href="#6-使用正确的淘汰策略"><span class="catalog-body-text">6.使用正确的淘汰策略</span></a></li></ol></li></ol>
+                    
+                </div>
+      </div>
+    
+
+                
+            <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/archive/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                       
+                          <a class="tag" href="/archive/?tag=Redis" title="Redis">Redis</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+
+                    
+                        <li><a href="#" target="_blank">Ðhc Blog</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+<!-- disqus embedded js code start (one page only need to embed once) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "dhc-1";
+    var disqus_identifier = "http://www.dinghongchao.com/how-to-reduce-redis-memory-usage/";
+    var disqus_url = "http://www.dinghongchao.com/how-to-reduce-redis-memory-usage/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus embedded js code start end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("https://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'hover',
+          placement: 'left',
+          //icon: 'ℬ'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            /*left: -0.75em;*/
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                
+                
+                    <li>
+                        <a target="_blank" href="https://twitter.com/zowo_dhc">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+                
+
+                
+
+                
+                    <li>
+                        <a target="_blank" href="https://www.facebook.com/dinghongchao">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/dinghongchao">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; ÐHC 2021 
+                    <br>
+                    <a href="https://beian.miit.gov.cn"> 京ICP备18036499号-1</a>
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> 
+                    | 
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=Huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="http://image.dinghongchao.com/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="http://image.dinghongchao.com/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="http://image.dinghongchao.com/js/hux-blog.min.js?version=1.0"></script>
+<script src="http://image.dinghongchao.com/js/archive.js"></script>
+<script src="http://image.dinghongchao.com/js/search.js"></script>
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://image.dinghongchao.com/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-137732952-1';
+    var _gaDomain = 'dinghongchao.com';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    //https://developers.google.cn/analytics/devguides/collection/analyticsjs/display-features?hl=zh-cn
+    //广告功能
+    ga('require', 'displayfeatures');
+    //停用广告功能
+    ga('set', 'allowAdFeatures', false);
+    ga('send', 'pageview');
+</script>
+
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = 'a2170bfc4f18f88db1664c4e38a3d921';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+<!-- Side Catalog -->
+<script type="text/javascript">
+    // toggle side catalog
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+</script>  
+
+
+<!-- Simple Jekyll Search -->
+<script>
+    // https://stackoverflow.com/questions/1912501/unescape-html-entities-in-javascript
+    function htmlDecode(input) {
+        var e = document.createElement('textarea');
+        e.innerHTML = input;
+        // handle case of empty input
+        return e.childNodes.length === 0 ? "" : e.childNodes[0].nodeValue;
+    }
+
+    
+    //searchFunc('/search.xml','search-input', 'search-results');
+
+    $(document).ready(function () {
+        var $searchPage = $('.search-page');
+        var $searchOpen = $('.search-icon');
+        var $searchClose = $('.search-icon-close');
+        var $searchInput = $('#search-input');
+        var $body = $('body');
+
+        $searchOpen.on('click', function (e) {
+            e.preventDefault();
+            $searchPage.toggleClass('search-active');
+            var prevClasses = $body.attr('class') || '';
+            setTimeout(function () {
+                $body.addClass('no-scroll');
+            }, 400)
+
+            if ($searchPage.hasClass('search-active')) {
+                $searchClose.on('click', function (e) {
+                    e.preventDefault();
+                    $searchPage.removeClass('search-active');
+                    $body.attr('class', prevClasses);  // from closure 
+                });
+                $searchInput.focus();
+            }
+            getSearchFile();
+        });
+    });
+</script>
+
+
+
+	<a id="rocket" href="#top" class=""></a>
+	<script type="text/javascript" src="http://image.dinghongchao.com/js/totop.js?v=1.0.0" async=""></script>
+   
+<!-- Image to hack wechat -->
+<img src="http://image.dinghongchao.com/img/icon_wechat.jpg" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+</body>
+
+</html>

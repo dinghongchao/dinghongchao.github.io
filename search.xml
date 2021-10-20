@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search> 
+  
+  
+    
+    <entry>
+      <title>序列化框架 Kryo 快速入门</title>
+      <subtitle></subtitle>
+      <link href="/kryo-quickstart/"/>
+      <url>/kryo-quickstart/</url>
+      
+      
+      
+        <tags>
+            
+            <tag> 序列化 </tag>
+            
+            <tag> kryo </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>[Redis] 减少 Redis 占用内存的建议</title>
+      <subtitle>Memory is expensive</subtitle>
+      <link href="/how-to-reduce-redis-memory-usage/"/>
+      <url>/how-to-reduce-redis-memory-usage/</url>
+      
+      
+      
+        <tags>
+            
+            <tag> Redis </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+  
+  
+</search>
